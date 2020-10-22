@@ -1,12 +1,23 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"go_authentication/database"
+	"go_authentication/routes"
 
-func Routes() *gin.Engine {
-	router := gin.Default()
-	return router
-}
+	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
+)
+
 func main() {
-	router := Routes()
+	//connect and migrate database
+	database.Mysql = database.Connect()
+	defer database.Mysql.Close()
+	// inisialisasi router
+	router := gin.Default()
+
+	authGroup := router.Group("/api/auth")
+	{
+		authGroup.POST("register", routes.AuthRegister)
+	}
 	router.Run(":3000")
 }

@@ -1,0 +1,32 @@
+package routes
+
+import (
+	"fmt"
+	"go_authentication/database"
+	"go_authentication/models"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
+
+func AuthRegister(c *gin.Context) {
+	user := models.User{}
+	err := c.ShouldBindJSON(&user)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = user.Register(database.Mysql)
+	if err != nil {
+		fmt.Println("Registrasi gagal")
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	token, err := user.GetAuthToken()
+	if err == nil {
+		c.JSON(http.StatusOK, gin.H{"token": token})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"id_user": user.ID})
+}
