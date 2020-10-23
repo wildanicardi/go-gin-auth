@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -30,24 +29,13 @@ func (u *User) Register(conn *sql.DB) error {
 	if u.Password != u.PasswordConfirm {
 		return fmt.Errorf("Password Tidak cocok")
 	}
-	u.Email = strings.ToLower(u.Email)
-	query, err := conn.Query("SELECT id FROM users WHERE email = " + u.Email)
-	if err != nil {
-		return fmt.Errorf("Sql error")
-	}
-	userLookup := User{}
-	for query.Next() {
-		if err := query.Scan(&userLookup); err != nil {
-			fmt.Println(userLookup.Email)
-			return fmt.Errorf("Email Tersedia")
-		}
-	}
+
 
 	pwdHash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return fmt.Errorf("Error Akun")
+		return fmt.Errorf("Error Hash Akun")
 	}
-	u.PasswordHash = string(pwdHash)
+	u.Password = string(pwdHash)
 
 	now := time.Now()
 	sql := "INSERT INTO users (name,email,password,created_at,updated_at) VALUES(?,?,?,?,?)"

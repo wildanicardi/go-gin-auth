@@ -34,7 +34,8 @@ func migrate(db *sql.DB) {
 		email VARCHAR(100) NOT NULL,
 		password VARCHAR(100) NOT NULL,
 		created_at TIMESTAMP NOT NULL DEFAULT current_timestamp(),
-		updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp()
+		updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp(),
+		UNIQUE (email)
 	);
 	`
 
