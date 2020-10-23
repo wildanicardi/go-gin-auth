@@ -9,6 +9,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func AuthLogin(c *gin.Context) {
+	user := models.User{}
+	err := c.ShouldBindJSON(&user)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	err = user.IsAuthenticated(database.Mysql)
+	if err != nil {
+		fmt.Println("Login gagal")
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	token, err := user.GetAuthToken()
+	if err == nil {
+		c.JSON(http.StatusOK, gin.H{"token": token})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"error": "Error Authetication"})
+}
+
 func AuthRegister(c *gin.Context) {
 	user := models.User{}
 	err := c.ShouldBindJSON(&user)

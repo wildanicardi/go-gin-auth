@@ -16,9 +16,9 @@ type User struct {
 	Email           string    `json:"email"`
 	Password        string    `json:"password"`
 	PasswordConfirm string    `json:"password_confirm"`
-	PasswordHash    string    `json:"password_hash"`
-	Created_at      time.Time `json:"created_at"`
-	Updated_at      time.Time `json:"updated_at"`
+	PasswordHash    string    `json:"-"`
+	Created_at      time.Time `json:"-"`
+	Updated_at      time.Time `json:"-"`
 }
 
 func (u *User) Register(conn *sql.DB) error {
@@ -30,17 +30,16 @@ func (u *User) Register(conn *sql.DB) error {
 		return fmt.Errorf("Password Tidak cocok")
 	}
 
-
 	pwdHash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("Error Hash Akun")
 	}
-	u.Password = string(pwdHash)
+	u.PasswordHash = string(pwdHash)
 
 	now := time.Now()
 	sql := "INSERT INTO users (name,email,password,created_at,updated_at) VALUES(?,?,?,?,?)"
 
-	_, err = conn.Exec(sql, u.Name, u.Email, u.Password, now, now)
+	_, err = conn.Exec(sql, u.Name, u.Email, u.PasswordHash, now, now)
 	return err
 
 }
@@ -57,4 +56,25 @@ func (u *User) GetAuthToken() (string, error) {
 
 	authToken, err := token.SignedString([]byte(os.Getenv("ACCESS_SECRET")))
 	return authToken, err
+}
+func (u *User) IsAuthenticated(conn *sql.DB) error {
+	sql := "SELECT id,password FROM users WHERE email = ?"
+	rows, err := conn.Query(sql, u.Email)
+	if err != nil {
+		return fmt.Errorf("Error Query Login")
+	}
+	for rows.Next() {
+		if err := rows.Scan(&u.ID, &u.PasswordHash); err != nil {
+			fmt.Println(err.Error())
+			return fmt.Errorf("Invalid Login")
+		}
+	}
+	
+
+	err = bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(u.Password))
+	if err != nil {
+		return fmt.Errorf("Invalid Password")
+	}
+
+	return nil
 }

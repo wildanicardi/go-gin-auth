@@ -19,6 +19,7 @@ func main() {
 	authGroup := router.Group("/api/auth")
 	{
 		authGroup.POST("register", routes.AuthRegister)
+		authGroup.POST("login", routes.AuthLogin)
 	}
 	router.Run(":3000")
 }
