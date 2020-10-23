@@ -51,25 +51,12 @@ func AuthRegister(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"id_user": user.ID})
 }
-func GetUsers(c *gin.Context) {
+func GetUserData(c *gin.Context) {
 	userDetail := models.UserDetail{}
-	userId, err := models.ExtractToken(c.Request)
+	data, err := userDetail.GetUser(database.Mysql, c.Request)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, "unauthorized")
-		return
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
-	sql := "SELECT id,name,email FROM users WHERE id = ?"
-	rows, err := database.Mysql.Query(sql, userId)
-	if err != nil {
-		fmt.Println("Error Query Data Users")
-		return
-	}
-	for rows.Next() {
-		if err := rows.Scan(&userDetail.ID, &userDetail.Name, &userDetail.Email); err != nil {
-			fmt.Println(err.Error())
-			return
-		}
-	}
-	c.JSON(http.StatusOK, gin.H{"users": userDetail})
+	c.JSON(http.StatusOK, gin.H{"users": data})
 	return
 }

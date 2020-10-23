@@ -24,9 +24,9 @@ type User struct {
 	Updated_at      time.Time `json:"-"`
 }
 type UserDetail struct {
-	ID              int64     `json:"id"`
-	Name            string    `json:"name"`
-	Email           string    `json:"email"`
+	ID    int64  `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 func (u *User) Register(conn *sql.DB) error {
@@ -66,6 +66,9 @@ func (u *User) GetAuthToken() (string, error) {
 	return authToken, err
 }
 func (u *User) IsAuthenticated(conn *sql.DB) error {
+	if strings.Trim(u.Email, " ") == "" || strings.Trim(u.Password, " ") == "" {
+		return fmt.Errorf("Request tidak boleh kosong")
+	}
 	sql := "SELECT id,password FROM users WHERE email = ?"
 	rows, err := conn.Query(sql, u.Email)
 	if err != nil {
@@ -80,7 +83,7 @@ func (u *User) IsAuthenticated(conn *sql.DB) error {
 
 	err = bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(u.Password))
 	if err != nil {
-		return fmt.Errorf("Invalid Password")
+		return fmt.Errorf("Invalid Email/Password")
 	}
 
 	return nil
@@ -108,7 +111,7 @@ func VerifyToken(r *http.Request) (*jwt.Token, error) {
 	}
 	return token, nil
 }
-func ExtractToken(r *http.Request) (uint64, error) {
+func GetPayload(r *http.Request) (uint64, error) {
 	token, err := VerifyToken(r)
 	if err != nil {
 		return 0, err
@@ -124,4 +127,20 @@ func ExtractToken(r *http.Request) (uint64, error) {
 	return 0, err
 }
 
-
+func (ud *UserDetail) GetUser(conn *sql.DB, r *http.Request) (*UserDetail, error) {
+	userId, err := GetPayload(r)
+	if err != nil {
+		return nil, fmt.Errorf("unauthorized")
+	}
+	sql := "SELECT id,name,email FROM users WHERE id = ?"
+	rows, err := conn.Query(sql, userId)
+	if err != nil {
+		return nil, fmt.Errorf("Error Query Data Users")
+	}
+	for rows.Next() {
+		if err := rows.Scan(&ud.ID, &ud.Name, &ud.Email); err != nil {
+			return nil, fmt.Errorf("Data gagal ditambahkan")
+		}
+	}
+	return ud, nil
+}

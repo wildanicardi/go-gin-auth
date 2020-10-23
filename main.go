@@ -20,7 +20,7 @@ func main() {
 	{
 		authGroup.POST("register", routes.AuthRegister)
 		authGroup.POST("login", routes.AuthLogin)
-		authGroup.POST("users", routes.GetUsers)
+		authGroup.POST("users", routes.GetUserData)
 	}
 	router.Run(":3000")
 }
