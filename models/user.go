@@ -3,7 +3,10 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -19,6 +22,11 @@ type User struct {
 	PasswordHash    string    `json:"-"`
 	Created_at      time.Time `json:"-"`
 	Updated_at      time.Time `json:"-"`
+}
+type UserDetail struct {
+	ID              int64     `json:"id"`
+	Name            string    `json:"name"`
+	Email           string    `json:"email"`
 }
 
 func (u *User) Register(conn *sql.DB) error {
@@ -51,7 +59,7 @@ func (u *User) GetAuthToken() (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
 	claims["user_id"] = u.ID
-	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
+	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
 
 	authToken, err := token.SignedString([]byte(os.Getenv("ACCESS_SECRET")))
@@ -69,7 +77,6 @@ func (u *User) IsAuthenticated(conn *sql.DB) error {
 			return fmt.Errorf("Invalid Login")
 		}
 	}
-	
 
 	err = bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(u.Password))
 	if err != nil {
@@ -78,3 +85,43 @@ func (u *User) IsAuthenticated(conn *sql.DB) error {
 
 	return nil
 }
+func ExtracToken(r *http.Request) string {
+	bearToken := r.Header.Get("Authorization")
+
+	strArr := strings.Split(bearToken, " ")
+	if len(strArr) == 2 {
+		return strArr[1]
+	}
+	return ""
+}
+
+func VerifyToken(r *http.Request) (*jwt.Token, error) {
+	tokenString := ExtracToken(r)
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method")
+		}
+		return []byte(os.Getenv("ACCESS_SECRET")), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
+}
+func ExtractToken(r *http.Request) (uint64, error) {
+	token, err := VerifyToken(r)
+	if err != nil {
+		return 0, err
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if ok && token.Valid {
+		userId, err := strconv.ParseUint(fmt.Sprintf("%.f", claims["user_id"]), 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		return userId, nil
+	}
+	return 0, err
+}
+
+
