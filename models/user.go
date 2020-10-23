@@ -28,7 +28,7 @@ type UserDetail struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
-
+// validasi dan tambah data register ke db
 func (u *User) Register(conn *sql.DB) error {
 	if len(u.Password) < 6 || len(u.PasswordConfirm) < 6 {
 		return fmt.Errorf("Password Terlalu Pendek")
@@ -51,7 +51,7 @@ func (u *User) Register(conn *sql.DB) error {
 	return err
 
 }
-
+// membuat token
 func (u *User) GetAuthToken() (string, error) {
 	//Creating Access Token
 	os.Setenv("ACCESS_SECRET", "secretfortoken")
@@ -65,6 +65,7 @@ func (u *User) GetAuthToken() (string, error) {
 	authToken, err := token.SignedString([]byte(os.Getenv("ACCESS_SECRET")))
 	return authToken, err
 }
+// validasi authentikasi login
 func (u *User) IsAuthenticated(conn *sql.DB) error {
 	if strings.Trim(u.Email, " ") == "" || strings.Trim(u.Password, " ") == "" {
 		return fmt.Errorf("Request tidak boleh kosong")
@@ -88,6 +89,7 @@ func (u *User) IsAuthenticated(conn *sql.DB) error {
 
 	return nil
 }
+// ekstrak request header token
 func ExtracToken(r *http.Request) string {
 	bearToken := r.Header.Get("Authorization")
 
@@ -97,7 +99,7 @@ func ExtracToken(r *http.Request) string {
 	}
 	return ""
 }
-
+// verifikasy hasil ekstraksi header request token
 func VerifyToken(r *http.Request) (*jwt.Token, error) {
 	tokenString := ExtracToken(r)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -111,6 +113,7 @@ func VerifyToken(r *http.Request) (*jwt.Token, error) {
 	}
 	return token, nil
 }
+// mengambil data payload dari token berupa user_id
 func GetPayload(r *http.Request) (uint64, error) {
 	token, err := VerifyToken(r)
 	if err != nil {
@@ -126,7 +129,7 @@ func GetPayload(r *http.Request) (uint64, error) {
 	}
 	return 0, err
 }
-
+// menampilkan data user berdasarkan request header token
 func (ud *UserDetail) GetUser(conn *sql.DB, r *http.Request) (*UserDetail, error) {
 	userId, err := GetPayload(r)
 	if err != nil {

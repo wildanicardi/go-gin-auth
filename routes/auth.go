@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// fungsi login
 func AuthLogin(c *gin.Context) {
 	user := models.User{}
 	err := c.ShouldBindJSON(&user)
@@ -23,13 +24,17 @@ func AuthLogin(c *gin.Context) {
 		return
 	}
 	token, err := user.GetAuthToken()
+
 	if err == nil {
 		c.JSON(http.StatusOK, gin.H{"token": token})
+
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{"error": "Error Authetication"})
 }
 
+// fungsi register
 func AuthRegister(c *gin.Context) {
 	user := models.User{}
 	err := c.ShouldBindJSON(&user)
@@ -44,13 +49,10 @@ func AuthRegister(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	token, err := user.GetAuthToken()
-	if err == nil {
-		c.JSON(http.StatusOK, gin.H{"token": token})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"id_user": user.ID})
+	c.JSON(http.StatusOK, gin.H{"msg": "Register Berhasil"})
 }
+
+// fungsi menampilkan data user
 func GetUserData(c *gin.Context) {
 	userDetail := models.UserDetail{}
 	data, err := userDetail.GetUser(database.Mysql, c.Request)
