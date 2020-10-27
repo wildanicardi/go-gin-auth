@@ -4,7 +4,7 @@ services:
         build: ./
         restart: always
         ports:
-            - 3000:3000
+          - "3306:3306"
         depends_on:
             - mysqldatabase
     mysqldatabase:
