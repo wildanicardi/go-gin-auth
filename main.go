@@ -43,7 +43,7 @@ func TokenAuthMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
-
+//Cek Token valid
 func TokenValid(r *http.Request) error {
 	token, err := models.VerifyToken(r)
 	if err != nil {
