@@ -10,10 +10,10 @@ var Mysql *sql.DB
 
 func Connect() *sql.DB {
 	user := "root"
-	host := "localhost"
+	host := "mysqldatabase"
 	port := "3306"
 	password := "root"
-	database := "go_auth"
+	database := "test"
 
 	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&multiStatements=true", user,password, host, port, database)
 	db, err := sql.Open("mysql", connection)
